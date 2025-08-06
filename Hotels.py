@@ -1,4 +1,6 @@
 from fastapi import Query, Body, Path, HTTPException, APIRouter
+
+from Dependencies import PaginationDep
 from schemes.hotel import Hotel, Hotel_patch
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -17,10 +19,9 @@ hotels = [
 
 @router.get("")
 async def get_hotels(
+    pagination: PaginationDep,
     id_hotel: int | None = Query(None, description="The ID of the hotel."),
     title: str | None = Query(None, description="The title of the hotel."),
-    page: int | None = Query(1, ge=1, description="The page number of the hotel."),
-    per_page: int | None = Query(3,ge=1, le=10, description="The number of items per page."),
 ):
     hotels_ = []
     for hotel in hotels:
@@ -30,9 +31,8 @@ async def get_hotels(
             continue
         hotels_.append(hotel)
     total_hotels = len(hotels_)
-    offset = (page - 1) * per_page
-    paginated_hotels = hotels_[offset:offset + per_page]
-    return paginated_hotels
+    offset = (pagination.page - 1) * pagination.per_page
+    return hotels_[offset:offset + pagination.per_page]
 
 @router.post("")
 async def post_hotels(
