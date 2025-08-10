@@ -1,7 +1,7 @@
 from fastapi import Query, Body, Path, HTTPException, APIRouter
 
-from Dependencies import PaginationDep
-from schemes.hotel import Hotel, Hotel_patch
+from src.api.Dependencies import PaginationDep
+from src.schemes.hotel import Hotel, HotelPatch
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -60,7 +60,7 @@ async def put_hotels(
 @router.patch("/{id_hotel}")
 async def patch_hotels(
         id_hotel: int = Path(description="The ID of the hotel."),
-        hotel_data: Hotel_patch = Body(embed=True, description="The hotel data."),
+        hotel_data: HotelPatch = Body(embed=True, description="The hotel data."),
 ):
     global hotels
     for hotel in hotels:
