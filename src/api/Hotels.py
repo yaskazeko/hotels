@@ -104,6 +104,7 @@ async def post_hotels(
             )
     return {
         "status": "OK",
+        "data": obj,
     }
 
 
