@@ -114,13 +114,18 @@ async def put_hotels(
         id_hotel: int = Path(description="The ID of the hotel."),
         hotel_data: Hotel = Body(embed=True, description="The hotel data."),
 ):
-    global hotels
-    if any(hotel['id'] == id_hotel for hotel in hotels):
-        hotels[id_hotel]["title"] = hotel_data.title
-        hotels[id_hotel]["phone"] = hotel_data.phone
-        return {"Status": "OK"}
-    else:
-        return {"Status": "ERROR", "message": f"The hotel `{id_hotel}` not found."}
+    async with async_session_maker() as session:
+        repo = HotelsRepository(session)
+        put_hotel_ok = await repo.put_hotel(id_hotel, hotel_data)
+        if not put_hotel_ok:
+            raise HTTPException(status_code=404, detail="Hotel not found")
+        await session.flush()
+        await session.refresh(put_hotel_ok)
+        await session.commit()
+    return {
+        "status": "OK",
+        "data": put_hotel_ok,
+    }
 
 @router.patch("/{id_hotel}")
 async def patch_hotels(
@@ -137,6 +142,13 @@ async def patch_hotels(
 
 @router.delete("/{hotel_id}")
 async def delete_hotel(hotel_id: int):
-    global hotels
-    hotels.remove(hotels[hotel_id])
-    return {"status": "DELETED"}
+    async with async_session_maker() as session:
+        repo = HotelsRepository(session)
+        ok = await repo.delete_hotels(hotel_id)
+        if not ok:
+            raise HTTPException(status_code=404, detail="The hotel does not exist.")
+
+        await session.commit()
+    return {"Status": "OK"}
+
+

@@ -1,4 +1,7 @@
+from http.client import HTTPException
+
 from sqlalchemy import select, insert, update, delete
+
 
 from src.models.hotels import HotelsOrm
 from src.repositories.base import BaseRepository
@@ -34,3 +37,28 @@ class HotelsRepository(BaseRepository):
         obj = HotelsOrm(**hotel_data.model_dump())
         self.session.add(obj)
         return obj
+
+    async def put_hotel(
+            self,
+            hotel_id: int,
+            hotel_data: Hotel = None,
+    ) -> HotelsOrm | None:
+        obj = await self.session.get(HotelsOrm, hotel_id)
+        if obj is None:
+            return None
+        for key, value in hotel_data.model_dump().items():
+            if key == "id":
+                continue
+            setattr(obj, key, value)
+        return obj
+
+
+    async def delete_hotels(
+            self,
+            hotel_id: int,
+    ) -> bool:
+        obj = await self.session.get(HotelsOrm, hotel_id)
+        if obj is None:
+            return False
+        await self.session.delete(obj)
+        return True
