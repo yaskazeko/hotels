@@ -1,11 +1,14 @@
 from fastapi import Query, Body, Path, HTTPException, APIRouter
-from sqlalchemy import insert, select
+from sqlalchemy import insert
+from sqlalchemy.exc import IntegrityError
+from starlette import status
 
 from src.api.Dependencies import PaginationDep
 from src.database import async_session_maker, engine
 from src.models.hotels import HotelsOrm
+from src.repositories.hotels import HotelsRepository
 from src.schemes.hotel import Hotel, HotelPatch
-from sqlalchemy import inspect
+
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 hotels = [
@@ -27,19 +30,11 @@ async def get_hotels(
     title: str | None = Query(None, description="The title of the hotel."),
 ):
     async with async_session_maker() as session:
-        query = select(HotelsOrm)
-        # if id_hotel is not None:
-        #     query = query.filter_by(id=id_hotel)
-        if title:
-            query = query.filter(HotelsOrm.title.ilike(f"%{title}%"))
-        query = (
-            query
-            .limit(pagination.per_page)
-            .offset((pagination.page - 1) * pagination.per_page)
+        return await HotelsRepository(session).get_all_hotels(
+            title=title,
+            limit=pagination.per_page,
+            offset=(pagination.page - 1)*pagination.per_page,
         )
-        result = await session.execute(query)
-        hotels_ = result.scalars().all()
-        return hotels_
 
 @router.post("")
 async def post_hotels(
@@ -95,16 +90,23 @@ async def post_hotels(
         })
 ):
     async with async_session_maker() as session:
-        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
-        print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
-        await session.execute(add_hotel_stmt)
-        await session.commit()
+        repo = HotelsRepository(session)
+        try:
+            obj = await repo.post_hotels(hotel_data)
+            await session.flush()
+            await session.refresh(obj)
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Hotel already exists or violates a constraint.",
+            )
+    return {
+        "status": "OK",
+    }
 
-    # global hotels
-    # hotels.append({'id': hotels[-1]["id"] + 1,
-    #                'title': hotel_data.title,
-    #                'phone': hotel_data.phone,})
-    return {"Status": "OK"}
+
 
 @router.put("/{id_hotel}")
 async def put_hotels(
