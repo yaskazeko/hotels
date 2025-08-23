@@ -36,6 +36,14 @@ async def get_hotels(
             offset=(pagination.page - 1)*pagination.per_page,
         )
 
+@router.get("/{hotel_id}")
+async def get_hotel(
+        hotel_id: int,
+):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get(hotel_id)
+
+
 @router.post("")
 async def post_hotels(
         hotel_data: Hotel = Body(description="The hotel data.", openapi_examples={

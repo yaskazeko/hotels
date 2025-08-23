@@ -29,6 +29,13 @@ class HotelsRepository(BaseRepository):
         result = await self.session.execute(query)
         return result.scalars().all()
 
+    async def get(
+            self,
+            hotel_id: int,
+    ):
+        query = select(HotelsOrm, hotel_id)
+        result = await self.session.execute(query)
+        return result.scalar()
 
     async def post_hotels(
             self,
