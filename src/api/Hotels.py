@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import Query, Body, Path, HTTPException, APIRouter
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
@@ -28,7 +30,7 @@ async def get_hotels(
     pagination: PaginationDep,
     # id_hotel: int | None = Query(None, description="The ID of the hotel."),
     title: str | None = Query(None, description="The title of the hotel."),
-):
+) -> List[Hotel]:
     async with async_session_maker() as session:
         return await HotelsRepository(session).get_all_hotels(
             title=title,

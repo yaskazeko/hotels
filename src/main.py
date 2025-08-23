@@ -6,7 +6,9 @@ from fastapi import FastAPI
 
 sys.path.append(str(Path(__file__).resolve().parent))
 from src.api.Hotels import router as hotels_router
+from src.api.auth import router as auth_router
 app = FastAPI()
+app.include_router(auth_router)
 app.include_router(hotels_router)
 
 

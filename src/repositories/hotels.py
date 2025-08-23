@@ -1,8 +1,11 @@
 from http.client import HTTPException
 
+from pydantic import BaseModel
+from requests import Session
 from sqlalchemy import select, insert, update, delete
 
-
+from src.api import Hotels
+#from src.api.Hotels import hotels
 from src.models.hotels import HotelsOrm
 from src.repositories.base import BaseRepository
 from src.schemes.hotel import Hotel
@@ -10,6 +13,8 @@ from src.schemes.hotel import Hotel
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
+    schema:BaseModel = Hotel
+
 
     async def get_all_hotels(
             self,
@@ -27,7 +32,8 @@ class HotelsRepository(BaseRepository):
             .offset(offset)
         )
         result = await self.session.execute(query)
-        return result.scalars().all()
+
+        return [self.schema.model_validate(model) for model in result.scalars().all()]
 
     async def get(
             self,
