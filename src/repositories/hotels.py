@@ -2,7 +2,7 @@ from http.client import HTTPException
 
 from pydantic import BaseModel
 from requests import Session
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import delete, insert, select, update
 
 from src.api import Hotels
 #from src.api.Hotels import hotels

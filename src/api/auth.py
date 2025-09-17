@@ -1,10 +1,12 @@
 
-from fastapi import APIRouter, HTTPException, Response, Request, Cookie
+from typing import Annotated
+
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response
+
 from src.database import async_session_maker
 from src.repositories.users import UsersRepository
-from src.schemes.users import UserRequestAdd, UserAdd
+from src.schemes.users import UserAdd, UserRequestAdd
 from src.services.auth import AuthService
-from typing import Annotated
 
 router = APIRouter(prefix="/auth", tags=["authentication and authorization"])
 

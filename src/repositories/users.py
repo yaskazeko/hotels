@@ -1,5 +1,5 @@
 from pydantic import EmailStr
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from src.models.users import UsersOrm
 from src.repositories.base import BaseRepository

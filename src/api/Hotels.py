@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Query, Body, Path, HTTPException, APIRouter
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 from starlette import status
