@@ -66,6 +66,15 @@ class HotelsRepository(BaseRepository):
         return obj
 
 
+    async def patch_hotel(self, obj: HotelsOrm, data: dict) -> HotelsOrm:
+        allowed = {c.name for c in HotelsOrm.__table__.columns}
+        for k, v in data.items():
+            if k in allowed:
+                setattr(obj, k, v)
+        self.session.add(obj)
+        return obj
+
+
     async def delete_hotels(
             self,
             hotel_id: int,
@@ -75,3 +84,7 @@ class HotelsRepository(BaseRepository):
             return False
         await self.session.delete(obj)
         return True
+    async def flush(self): await self.session.flush()
+    async def refresh(self, obj): await self.session.refresh(obj)
+    async def commit(self): await self.session.commit()
+    async def rollback(self): await self.session.rollback()

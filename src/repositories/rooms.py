@@ -68,6 +68,6 @@ class RoomsRepository:
         return await self.get_by_id(room_id)
 
     async def delete(self, room_id: int) -> bool:
-        res = await self.session.execute(delete(RoomOrm).where(RoomOrm.id == room_id))
+        await self.session.execute(delete(RoomOrm).where(RoomOrm.id == room_id))
 
         return True
