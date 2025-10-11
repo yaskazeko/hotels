@@ -23,6 +23,9 @@ class BaseRepository:
             return None
         return self.schema.model_validate(model)
 
+    async def get_by_id(self, id: int):
+        return await self.get_one_or_none(id=id)
+
     async def add(self, data: BaseModel):
         add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(add_data_stmt)
