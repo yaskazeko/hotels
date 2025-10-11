@@ -3,7 +3,7 @@ from typing import List, Optional
 from black.rusty import Ok
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.api.Dependencies import DBDep
+from src.api.dependencies import DBDep
 from src.database import get_async_session  # твой провайдер сессии
 from src.repositories.rooms import RoomsRepository
 from src.schemes.rooms import RoomCreate, RoomInDB, RoomUpdate

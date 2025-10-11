@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from requests import Session
 from sqlalchemy import delete, insert, select, update
 
-from src.api import Hotels
+from src.api import hotels
 #from src.api.Hotels import hotels
 from src.models.hotels import HotelsOrm
 from src.repositories.base import BaseRepository

@@ -5,7 +5,7 @@ from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 from starlette import status
 
-from src.api.Dependencies import PaginationDep, DBDep
+from src.api.dependencies import PaginationDep, DBDep
 from src.database import async_session_maker, engine
 from src.models.hotels import HotelsOrm
 from src.repositories.hotels import HotelsRepository
