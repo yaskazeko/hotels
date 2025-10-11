@@ -1,19 +1,10 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from fastapi import Cookie, Depends, HTTPException, status
 
 from src.database import async_session_maker
 from src.services.auth import AuthService
 from src.utils.db_manager import DBManager
-
-
-class PaginationParams(BaseModel):
-    page: Annotated[int | None, Query(1, ge=1, description="The page number of the hotel.")]
-    per_page: Annotated[int | None, Query(3, ge=3, le=10, description="The number of items per page.")]
-
-
-PaginationDep = Annotated[PaginationParams, Depends()]
 
 
 def get_db_manager():

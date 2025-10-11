@@ -1,11 +1,8 @@
 from typing import List, Optional
 
-from black.rusty import Ok
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Query, status
+
 from src.api.dependencies import DBDep
-from src.database import get_async_session  # твой провайдер сессии
-from src.repositories.rooms import RoomsRepository
 from src.schemes.rooms import RoomCreate, RoomInDB, RoomUpdate
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -19,8 +16,8 @@ async def list_rooms(
     max_price: Optional[float] = Query(None, ge=0),
     capacity: Optional[int] = Query(None, ge=1),
     is_active: Optional[bool] = Query(True),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(50, ge=1, le=200, description="Number of records to return"),
     order_by_price: Optional[str] = Query(None, pattern="^(asc|desc)$"),
 ):
 
@@ -31,7 +28,7 @@ async def list_rooms(
         capacity=capacity,
         is_active=is_active,
         limit=limit,
-        offset=offset,
+        offset=skip,
         order_by_price=order_by_price,
     )
 

@@ -1,14 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query
-from sqlalchemy import insert
+from fastapi import APIRouter, Body, HTTPException, Path, Query, status
 from sqlalchemy.exc import IntegrityError
-from starlette import status
 
-from src.api.dependencies import PaginationDep, DBDep
-from src.database import async_session_maker, engine
-from src.models.hotels import HotelsOrm
-from src.repositories.hotels import HotelsRepository
+from src.api.dependencies import DBDep
 from src.schemes.hotel import Hotel, HotelPatch
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -16,16 +11,15 @@ router = APIRouter(prefix="/hotels", tags=["Hotels"])
 @router.get("")
 async def get_hotels(
     db: DBDep,
-    pagination: PaginationDep,
-    # id_hotel: int | None = Query(None, description="The ID of the hotel."),
     title: str | None = Query(None, description="The title of the hotel."),
-
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(10, ge=1, le=100, description="Number of records to return"),
 ) -> List[Hotel]:
 
     return await db.hotels.get_all_hotels(
         title=title,
-        limit=pagination.per_page,
-        offset=(pagination.page - 1)*pagination.per_page,
+        limit=limit,
+        offset=skip,
     )
 
 @router.get("/{hotel_id}")
@@ -117,13 +111,12 @@ async def put_hotels(
         id_hotel: int = Path(description="The ID of the hotel."),
         hotel_data: Hotel = Body(embed=True, description="The hotel data."),
 ):
-        repo = db.hotels
-        put_hotel_ok = await repo.put_hotel(id_hotel, hotel_data)
+        put_hotel_ok = await db.hotels.put_hotel(id_hotel, hotel_data)
         if not put_hotel_ok:
-            raise HTTPException(status_code=404, detail="Hotel not found")
-        await repo.flush()
-        await repo.refresh(put_hotel_ok)
-        await repo.commit()
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
+        await db.flush()
+        await db.refresh()
+        await db.commit()
         return {"status": "OK", "data": put_hotel_ok}
 
 @router.patch("/{id_hotel}")
@@ -132,41 +125,40 @@ async def patch_hotels(
     id_hotel: int = Path(description="The ID of the hotel."),
     hotel_data: HotelPatch = Body(embed=True, description="The hotel data."),
 ):
-    repo = db.hotels
     data = hotel_data.model_dump(exclude_unset=True)
 
     if not data:
-        raise HTTPException(status_code=400, detail="No fields to update.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No fields to update.")
 
     # Загружаем объект
-    obj = await repo.get(id_hotel)
+    obj = await db.hotels.get(id_hotel)
     if not obj:
-        raise HTTPException(status_code=404, detail="Hotel not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
 
     try:
         # Частичное обновление
-        await repo.patch_hotel(obj, data)
+        await db.hotels.patch_hotel(obj, data)
 
-        await repo.flush()
-        await repo.refresh(obj)
-        await repo.commit()
+        await db.flush()
+        await db.refresh()
+        await db.commit()
     except IntegrityError:
-        await repo.rollback()
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Update violates a constraint.",
         )
 
     return {"status": "OK", "data": obj}
-@router.delete("/{hotel_id}")
-async def delete_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        repo = HotelsRepository(session)
-        ok = await repo.delete_hotels(hotel_id)
-        if not ok:
-            raise HTTPException(status_code=404, detail="The hotel does not exist.")
-
-        await session.commit()
-    return {"Status": "OK"}
+@router.delete("/{hotel_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_hotel(
+    db: DBDep,
+    hotel_id: int,
+):
+    ok = await db.hotels.delete_hotels(hotel_id)
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The hotel does not exist.")
+    await db.commit()
+    return None
 
 

@@ -35,7 +35,7 @@ async def create_booking(
     current_user_id: CurrentUserDep,
     data: BookingsCreate,
 ):
-    booking = await db.bookings.createbookings(data)
+    booking = await db.bookings.create_booking(data, user_id=current_user_id)
     if not booking:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create booking")
     await db.commit()
