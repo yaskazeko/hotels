@@ -1,17 +1,37 @@
+from datetime import date
 from http.client import HTTPException
 
+from dns.e164 import query
 from pydantic import BaseModel
 from requests import Session
 from sqlalchemy import delete, insert, select, update
 
+from src.models import RoomOrm
 from src.models.hotels import HotelsOrm
 from src.repositories.base import BaseRepository
+from src.repositories.utils import rooms_ids_for_booking
 from src.schemes.hotel import Hotel
 
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
     schema:BaseModel = Hotel
+
+    async def get_filtered_by_time(
+            self,
+            date_from: date,
+            date_to: date,
+            offset: int = None,
+            limit: int = None,
+    ):
+        rooms_id_to_get = rooms_ids_for_booking(date_from, date_to)
+        hotels_ids = (
+            select(RoomOrm.hotel_id)
+            .select_from(RoomOrm)
+            .filter(RoomOrm.id.in_(rooms_id_to_get))
+        )
+        return await self.get_filtered(HotelsOrm.id.in_(hotels_ids))
+
 
 
     async def get_all_hotels(

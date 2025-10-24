@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 
 from fastapi import APIRouter, Body, HTTPException, Path, Query, status
@@ -22,13 +23,17 @@ async def get_hotels(
         offset=skip,
     )
 
-@router.get("/{hotel_id}")
-async def get_hotel(
+@router.get("")
+async def get_hotels_by_bookings(
         db: DBDep,
-        hotel_id: int,
+        hotel_id: int | None = None,
+        date_from: date = Query(example="2025-10-10"),
+        date_to: date = Query(example="2025-10-25"),
+        skip: int = Query(0, ge=0, description="Number of records to skip"),
+        limit: int = Query(10, ge=1, le=100, description="Number of records to return"),
 ):
 
-        return await db.hotels.get(hotel_id)
+        return await db.rooms.get_by_time(hotel_id= hotel_id, date_from=date_from, date_to=date_to, skip=skip, limit=limit)
 
 
 @router.post("")
