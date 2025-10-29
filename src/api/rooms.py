@@ -4,6 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.dependencies import DBDep
+from src.schemes.facilities import RoomFacilitiesAdd
 from src.schemes.rooms import RoomCreate, RoomInDB, RoomUpdate
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -54,7 +55,13 @@ async def create_room(
     room = await db.rooms.create(data)
     if not room:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+    if data.facilities_ids:
+        rooms_facilities_data = [RoomFacilitiesAdd(room_id=room.id, facility_id=f_id) for f_id in data.facilities_ids]
+        await db.rooms_facilities.add_bulk(rooms_facilities_data)
+
     await db.commit()
+
     return room
 
 # PATCH /rooms/{id} — частичное обновление
@@ -64,7 +71,16 @@ async def patch_room(
     room_id: int,
     data: RoomUpdate,
 ):
-    return await db.rooms.update(room_id, data)
+    room = await db.rooms.update(room_id, data)
+    if not room:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+    if data.facilities_ids is not None:
+        await db.rooms_facilities.set_room_facilities(room_id=room.id, facilities_ids=data.facilities_ids)
+
+    await db.commit()
+
+    return room
 
 # DELETE /rooms/{id}
 @router.delete("/{room_id}", status_code=status.HTTP_204_NO_CONTENT)

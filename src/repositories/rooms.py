@@ -97,13 +97,13 @@ class RoomsRepository:
         return res.scalars().all()
 
     async def create(self, data: RoomCreate) -> RoomOrm:
-        room = RoomOrm(**data.model_dump())
+        room = RoomOrm(**data.model_dump(exclude={'facilities_ids'}))
         self.session.add(room)
         await self.session.flush()  # чтобы получить room.id
         return room
 
     async def update(self, room_id: int, data: RoomUpdate) -> Optional[RoomOrm]:
-        payload = {k:v for k,v in data.model_dump(exclude_unset=True).items()}
+        payload = {k:v for k,v in data.model_dump(exclude_unset=True, exclude={'facilities_ids'}).items()}
         if not payload:
             return await self.get_by_id(room_id)
 

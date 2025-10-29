@@ -9,6 +9,7 @@ class RoomBase(BaseModel):
     capacity: conint(ge=1) = 2
     price_per_night: confloat(ge=0) = 0.0
     is_active: bool = True
+    facilities_ids: list[int] | None = None
 
 class RoomCreate(RoomBase):
     hotel_id: int
@@ -19,6 +20,7 @@ class RoomUpdate(BaseModel):
     capacity: Optional[conint(ge=1)] = None
     price_per_night: Optional[confloat(ge=0)] = None
     is_active: Optional[bool] = None
+    facilities_ids: list[int] | None = None
 
 class RoomInDB(RoomBase):
     id: int
