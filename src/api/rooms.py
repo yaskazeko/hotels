@@ -5,12 +5,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 
 from src.api.dependencies import DBDep
 from src.schemes.facilities import RoomFacilitiesAdd
-from src.schemes.rooms import RoomCreate, RoomInDB, RoomUpdate
+from src.schemes.rooms import RoomCreate, RoomInDB, RoomUpdate, RoomWithRels
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
 # GET /rooms — список с фильтрами и пагинацией
-@router.get("", response_model=List[RoomInDB])
+@router.get("", response_model=List[RoomWithRels])
 async def list_rooms(
     db: DBDep,
     hotel_id: Optional[int] = Query(None),
@@ -35,13 +35,13 @@ async def list_rooms(
     )
 
 # GET /rooms/{id} — детально
-@router.get("/{room_id}", response_model=RoomInDB)
+@router.get("/{room_id}", response_model=RoomWithRels)
 async def get_room(
     db: DBDep,
     room_id: int,
 ):
 
-    room = await db.rooms.get_by_id(room_id)
+    room = await db.rooms.get_by_id_with_facilities(room_id)
     if not room:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
     return room

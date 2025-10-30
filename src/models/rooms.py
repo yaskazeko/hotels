@@ -30,4 +30,7 @@ class RoomOrm(Base):
         back_populates="room",
         cascade="all, delete-orphan"
     )
-
+    facilities: Mapped[List["FacilitiesOrm"]] = relationship(
+        back_populates="rooms",
+        secondary="rooms_facilities",
+    )

@@ -3,11 +3,12 @@ from typing import Optional, Sequence
 
 from sqlalchemy import and_, delete, select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy.orm import selectinload, joinedload
 from src.database import engine
 from src.models.booking import BookingsOrm
 from src.models.rooms import RoomOrm
-from src.schemes.rooms import RoomCreate, RoomUpdate
+from src.repositories.utils import rooms_ids_for_booking
+from src.schemes.rooms import RoomCreate, RoomUpdate, RoomWithRels
 
 
 class RoomsRepository:
@@ -16,6 +17,15 @@ class RoomsRepository:
 
     async def get_by_id(self, room_id: int) -> Optional[RoomOrm]:
         res = await self.session.execute(select(RoomOrm).where(RoomOrm.id == room_id))
+        return res.scalar_one_or_none()
+
+    async def get_by_id_with_facilities(self, room_id: int) -> Optional[RoomOrm]:
+        query = (
+            select(RoomOrm)
+            .options(selectinload(RoomOrm.facilities))
+            .where(RoomOrm.id == room_id)
+        )
+        res = await self.session.execute(query)
         return res.scalar_one_or_none()
 
     async def get_by_time(
@@ -59,7 +69,14 @@ class RoomsRepository:
                     rooms_left_table.c.room_id.in_(room_ids_for_hotel)
             )
         )
-        return await self.get_filtered(RoomOrm.id.in_(rooms_is_to_get))
+
+        query = (
+            select(RoomOrm)
+            .options(selectinload(RoomOrm.facilities))
+            .filter(RoomOrm.id.in_(rooms_is_to_get))
+        )
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def list(
         self,
@@ -85,7 +102,10 @@ class RoomsRepository:
         if max_price is not None:
             conds.append(RoomOrm.price_per_night <= max_price)
 
-        stmt = select(RoomOrm).where(and_(*conds)) if conds else select(RoomOrm)
+        stmt = select(RoomOrm).options(selectinload(RoomOrm.facilities))
+
+        if conds:
+            stmt = stmt.where(and_(*conds))
 
         if order_by_price == "asc":
             stmt = stmt.order_by(RoomOrm.price_per_night.asc())
@@ -117,3 +137,19 @@ class RoomsRepository:
         await self.session.execute(delete(RoomOrm).where(RoomOrm.id == room_id))
 
         return True
+
+    async def get_filtered_by_time(
+            self,
+            hotel_id,
+            date_from: date,
+            date_to: date,
+
+    ):
+        rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
+        query = (
+            select(RoomOrm)
+            .options(joinedload(RoomOrm.facilities))
+            .filter(RoomOrm.id.in_(rooms_ids_to_get))
+        )
+        result = await self.session.execute(query)
+        return [RoomWithRels.model_validate(model) for model in result.unique().scalars().all()]

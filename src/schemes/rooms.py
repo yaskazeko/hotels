@@ -1,5 +1,8 @@
 from typing import Optional
 
+from src.models import RoomOrm
+from src.schemes.facilities import Facility
+
 from pydantic import BaseModel, Field, confloat, conint
 
 
@@ -13,6 +16,9 @@ class RoomBase(BaseModel):
 
 class RoomCreate(RoomBase):
     hotel_id: int
+
+
+
 
 class RoomUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=120)
@@ -29,3 +35,15 @@ class RoomInDB(RoomBase):
     class Config:
         from_attributes = True
 
+class RoomWithRels(BaseModel):
+    id: int
+    hotel_id: int
+    name: str
+    description: Optional[str] = None
+    capacity: int
+    price_per_night: float
+    is_active: bool
+    facilities: list[Facility]
+
+    class Config:
+        from_attributes = True

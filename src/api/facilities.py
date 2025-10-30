@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from src.api.dependencies import CurrentUserDep, DBDep
-from src.schemes.facilities import FacilitiesBase
+from src.schemes.facilities import FacilitiesAdd
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
@@ -19,7 +19,7 @@ async def get_facility(
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_facility(
-    data: FacilitiesBase,
+    data: FacilitiesAdd,
     db: DBDep,
 ):
     facility = await db.facilities.create(data)

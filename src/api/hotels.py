@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep
 from src.schemes.hotel import Hotel, HotelPatch
+from src.schemes.rooms import RoomWithRels
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -23,8 +24,8 @@ async def get_hotels(
         offset=skip,
     )
 
-@router.get("")
-async def get_hotels_by_bookings(
+@router.get("/available-rooms", response_model=List[RoomWithRels])
+async def get_available_rooms(
         db: DBDep,
         hotel_id: int | None = None,
         date_from: date = Query(example="2025-10-10"),
