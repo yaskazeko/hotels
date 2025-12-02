@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_HOST: str
     DB_PORT: int
-
+    REDIS_HOST: str
+    REDIS_PORT: int
     # JWT
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
@@ -16,6 +17,14 @@ class Settings(BaseSettings):
 
     # Security
     DEBUG: bool = False
+
+    # Celery
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+
+    @property
+    def redis_url(self):
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
     @property
     def db_url(self) -> str:
